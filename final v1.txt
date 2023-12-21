@@ -1,0 +1,218 @@
+#include<reg51.h>
+#include"Sim800l_Module.h"
+//#include"Lcd_Display.h"
+sbit r1=P1^0;
+sbit r2=P1^1;
+sbit r3=P1^2;
+sbit r4=P1^3;
+sbit c1=P1^4;
+sbit c2=P1^5;
+sbit c3=P1^6;
+//keypad
+sbit rs=P0^0;
+sbit rw=P0^1;
+sbit en=P0^2;
+//LCD
+sbit mot1p=P0^3;
+sbit mot1n=P0^4;
+//motor
+unsigned char pwd[10],x;
+int count=0;
+void delay(unsigned int time){
+	unsigned int i,j;
+	for(i=0;i<time;i++){
+		for(j=0;j<1275;j++);
+	}
+}
+void lcd_cmd(unsigned char dat){
+	P2= dat;
+	rs=0;
+	rw=0;
+	en=1;
+	delay(100);
+	en=0;
+}
+
+void lcd_data(unsigned char dat){
+  P2=dat;
+	rs=1;
+	rw=0;
+	en=1;
+	delay(10);
+	en=0;
+}
+void lcddis(unsigned char *s,unsigned char r){
+	int i;
+	for(i=0;i<r;i++){
+		lcd_data(s[i]);
+		delay(5);
+	}
+}
+void init(){
+	lcd_cmd(0x38);
+	lcd_cmd(0x01);
+	lcd_cmd(0x0e);
+	lcd_cmd(0xc0);
+	lcd_cmd(0x0c);
+	lcd_cmd(0x80);	
+	lcddis("Enter Password",14);//14
+	lcd_cmd(0xc0);
+}
+void send_sms(){
+		lcd_cmd(0x01);
+		sendString("AT+CMGF=1\r\n");
+		delay(1);
+		sendString("AT+CMGS=\"+9779841643613\"\r\n");
+		delay(1);
+		sendString("I");
+		sendChar(0x1A);
+		delay(1);
+		sendString("AT+CMGF=0\r\n");
+		delay(1);
+		
+ 
+}
+void lockback(){
+	mot1p=0;
+	mot1n=1;
+		lcd_cmd(0x01);
+		lcddis("Closing Lock",12);
+	delay(1000);
+	mot1p=1;
+	mot1n=1;
+}
+void check(){
+	if(pwd[0]=='1'&&pwd[1]=='1'&&pwd[2]=='1'&&pwd[3]=='1'){
+		mot1p=1;
+		mot1n=0;
+		lcd_cmd(0x01);
+		lcddis("Password Matched",16);
+		lcd_cmd(0xc0);
+		lcddis("Opening Lock",12);
+		delay(1000);
+		lockback();
+		init();
+		x=0;
+		pwd[0]='p';
+
+	}
+	else{
+		lcd_cmd(0x01);
+		lcddis("Password Wrong",14);
+		delay(50);
+		
+		
+		x=0;
+		pwd[0]='p';
+		count=count+1;
+		if(count==1){
+			
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	sim_delay(); //waiting for initilization sim800l
+	initSerial();
+	send_sms();
+	delay(10);
+	lcddis("Message Sent",12);
+			init();
+		}
+	
+		
+	}
+}
+
+
+
+void main()
+{ 
+	init();
+	while(1){
+		
+		r1=0;
+		if(c1==0){
+			pwd[x]='1';
+			lcd_data('*');
+			delay(50);
+			x=x+1;
+		}
+		if(c2==0){
+			pwd[x]='2';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		if(c3==0){
+			pwd[x]='3';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		
+		r2=0;r1=1;
+		if(c1==0){
+			pwd[x]='4';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		if(c2==0){
+			pwd[x]='5';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		if(c3==0){
+			pwd[x]='6';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		r3=0;r2=1;
+		if(c1==0){
+			pwd[x]='7';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		if(c2==0){
+			pwd[x]='8';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		if(c3==0){
+			pwd[x]='9';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		
+		r4=0;r3=1;
+		if(c1==0){
+			pwd[x]='*';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		if(c2==0){
+			pwd[x]='0';
+			delay(50);
+			lcd_data('*');
+			x=x+1;
+		}
+		if(c3==0){
+			check();
+			
+			
+		}
+		r4=1;
+	}
+	
+	
+}
